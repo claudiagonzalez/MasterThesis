@@ -1,0 +1,60 @@
+load("lumi.raw-object")
+
+########## QC raw data ##############
+RawQC <-summary(lumi.raw, 'QC')
+save(RawQC, file = "Raw data QC")
+
+#### Graph analysis ####
+plot(lumi.raw, what="boxplot")
+savetiff("Raw_Boxplot",density = 300)
+
+plot(lumi.raw, what ="cv")
+savetiff("Raw_CV",density = 300)
+
+plot(lumi.raw, what = "density")
+savetiff("Raw_density",density = 300)
+
+######## Normalization using quantile method ########
+
+# Without variance stabilization
+lumi.N <- lumiExpresso(lumi.raw, variance.stabilize=FALSE, normalize.param = list(method='quantile'),bg.correct=FALSE)
+
+# With variance stabilization
+lumi.NV <- lumiExpresso(lumi.raw, variance.stabilize=TRUE, normalize.param = list(method='quantile'),bg.correct=FALSE)
+
+# Save both 
+save(lumi.N, file="lumi.N-object")
+save(lumi.NV, file="lumi.NV-object")
+
+write.exprs(lumi.N,file="lumi.N_normalized data.txt")
+write.exprs(lumi.NV,file="lumi.NV_normalized data.txt")
+
+summary(lumi.N, 'QC')
+summary(lumi.NV, 'QC')
+
+#### Graph Analysis Normalized Data ####
+
+plot(lumi.N, what="boxplot")
+savetiff("Normalized-NoVar_Boxplot",density = 300)
+
+plot(lumi.NV, what="boxplot")
+savetiff("Normalized_Boxplot",density = 300)
+
+plot(lumi.N, what ="cv")
+savetiff("Normalized-NoVar_CV",density = 300)
+
+plot(lumi.NV, what ="cv")
+savetiff("Normalized_CV", density = 300)
+
+plot(lumi.N, what = "density")
+savetiff("Normalized-NoVar_Density_Boxplot",density = 300)
+
+plot(lumi.NV, what = "density")
+savetiff("Normalized_Density", density = 300)
+
+plot(lumi.N, what = "pair")
+savetiff("Normalized-NoVar_Pair",density = 300)
+
+plot(lumi.NV, what = "pair")
+savetiff("Normalized_Pair", density = 300)
+

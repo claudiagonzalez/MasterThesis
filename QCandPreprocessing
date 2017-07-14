@@ -14,47 +14,108 @@ savetiff("Raw_CV",density = 300)
 plot(lumi.raw, what = "density")
 savetiff("Raw_density",density = 300)
 
+
+##### Delete samples that are no relevant for this experiment #####
+## See notes ##
+
+Experiment <-lumi.raw[, c(1:2,5,6,9,10,13,14,17,18,21,22)]
+colnames(Experiment) <- c("1588_Ctrl", "1588_VitD", "1614_Ctrl", "1615_VitD", "1811_Ctrl", "1811_VitD", "1588_DEX", "1588_VitD+DEX", "1614_DEX", "1614_VitD+DEX", "1811_DEX", "1811_VitD+DEX")
+
+
 ######## Normalization using quantile method ########
 
-# Without variance stabilization
-lumi.N <- lumiExpresso(lumi.raw, variance.stabilize=FALSE, normalize.param = list(method='quantile'),bg.correct=FALSE)
+## Testing the impact of variance stabilization 
 
-# With variance stabilization
-lumi.NV <- lumiExpresso(lumi.raw, variance.stabilize=TRUE, normalize.param = list(method='quantile'),bg.correct=FALSE)
+Experiment.N <- lumiExpresso(Experiment, variance.stabilize=FALSE, normalize.param = list(method='quantile'),bg.correct=FALSE)
+Experiment.NV <- lumiExpresso(Experiment, variance.stabilize=TRUE, normalize.param = list(method='quantile'),bg.correct=FALSE)
 
-# Save both 
-save(lumi.N, file="lumi.N-object")
-save(lumi.NV, file="lumi.NV-object")
+## Testing whether the dataset has been corrected for background ##
 
-write.exprs(lumi.N,file="lumi.N_normalized data.txt")
-write.exprs(lumi.NV,file="lumi.NV_normalized data.txt")
+Experiment.NV.BG <-lumiExpresso(Experiment, variance.stabilize=TRUE, normalize.param = list(method= 'quantile'), bg.correct=TRUE, bgcorrect.param = list(method='bgAdjust'), QC.evaluation = TRUE, verbose = TRUE)
 
-summary(lumi.N, 'QC')
-summary(lumi.NV, 'QC')
+## Save all files ##
 
-#### Graph Analysis Normalized Data ####
+save(Experiment.N, file="Experiment.N-object")
+save(Experiment.NV, file="Experiment.NV-object")
+save(Experiment.NV.BG, file="Experiment.NV.BG-object")
 
-plot(lumi.N, what="boxplot")
-savetiff("Normalized-NoVar_Boxplot",density = 300)
+write.exprs(Experiment.N,file="Experiment.N_normalized data.txt")
+write.exprs(Experiment.NV,file="Experiment.NV_normalized data.txt")
+write.exprs(Experiment.NV,file="Experiment.NV_normalized_bckgnd data.txt")
 
-plot(lumi.NV, what="boxplot")
-savetiff("Normalized_Boxplot",density = 300)
+summary(Experiment.N, 'QC')
+summary(Experiment.NV, 'QC')
+summary(Experiment.NV.BG, 'QC')
 
-plot(lumi.N, what ="cv")
-savetiff("Normalized-NoVar_CV",density = 300)
+### Graph analysis ###
 
-plot(lumi.NV, what ="cv")
-savetiff("Normalized_CV", density = 300)
+# BOXPLOT
+plot(Experiment, what="boxplot")
+savetiff("Experiment-NoNorm_Boxplot",density = 300)
 
-plot(lumi.N, what = "density")
-savetiff("Normalized-NoVar_Density_Boxplot",density = 300)
+plot(Experiment.NV, what="boxplot")
+savetiff("Experiment-N_Boxplot",density = 300)
 
-plot(lumi.NV, what = "density")
-savetiff("Normalized_Density", density = 300)
+plot(Experiment.NV.BG, what="boxplot")
+savetiff("Experiment-N-BG_Boxplot",density = 300)
 
-plot(lumi.N, what = "pair")
-savetiff("Normalized-NoVar_Pair",density = 300)
+# CV
+plot(Experiment, what ="cv")
+savetiff("Experiment-NoNorm_CV", density = 300)
 
-plot(lumi.NV, what = "pair")
-savetiff("Normalized_Pair", density = 300)
+plot(Experiment.NV, what ="cv")
+savetiff("Experiment-N_CV", density = 300)
+
+plot(Experiment.NV.BG, what ="cv")
+savetiff("Experiment-N-BG_CV", density = 300)
+
+# DENSITY
+plot(Experiment, what = "density")
+savetiff("Experiment-NoNorm_Density", density = 300)
+
+plot(Experiment.NV, what = "density")
+savetiff("Experiment-N_Density", density = 300)
+
+plot(Experiment.NV.BG, what = "density")
+savetiff("Experiment-N-BG_Density", density = 300)
+
+# PAIRWISE
+plot(Experiment, what = "pair")
+savetiff("Experiment-NoNorm_Pair", density = 300)
+
+plot(Experiment.NV, what = "pair")
+savetiff("Experiment-N_Pair", density = 300)
+
+plot(Experiment.NV.BG, what = "pair")
+savetiff("Experiment-N-BG_Pair", density = 300)
+
+# MA PLOTS
+plot(Experiment, what = "MAplot")
+savetiff("Experiment-NoNorm_MAplot", density = 300)
+
+plot(Experiment.NV, what = "MAplot")
+savetiff("Experiment-N_MAplot", density = 300)
+
+plot(Experiment.NV.BG, what = "MAplot")
+savetiff("Experiment-N-BG_MAplot", density = 300)
+
+#### CLUSTERING
+
+plotSampleRelation(Experiment,method = c("cluster"))
+savetiff("Experiment_cluster-NoNorm",density=300)
+
+plotSampleRelation(Experiment.NV,method = c("cluster"))
+savetiff("Experiment_cluster-Norm",density=300)
+
+plotSampleRelation(Experiment.NV.BG,method = c("cluster"))
+savetiff("Experiment_cluster-Norm-BG",density=300)
+
+plotSampleRelation(Experiment,method = c("mds"))
+savetiff("Experiment_MDS-NoNorm",density=300)
+
+plotSampleRelation(Experiment.NV,method = c("mds"))
+savetiff("Experiment_MDS-Norm",density=300)
+
+plotSampleRelation(Experiment.NV.BG,method = c("mds"))
+savetiff("Experiment_MDS-Norm-BG",density=300)
 

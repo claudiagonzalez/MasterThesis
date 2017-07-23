@@ -107,3 +107,6 @@ write.table(Iv, "DE_VitDandVitDEX.txt", sep = "\t")
 Iv <- which(results3 [,6]!=0 &results3[,5]!=0)
 write.table(Iv, "DE_DEXandVitDEX.txt", sep = "\t")
 
+# VitDEX excluding VitD and DEX # 
+Iv <- which(results3 [,6]!=0 & results3[,4]==0 & results3[,5]==0)
+write.table(Iv, "DE_VitDEXexceptVitDandDEX.txt", sep = "\t")

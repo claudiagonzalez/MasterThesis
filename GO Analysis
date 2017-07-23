@@ -29,3 +29,25 @@ sigGO.ID <- names(gGhyp.padj[gGhyp.padj <0.01])
 
 # Show significant GO terms #
 sigGO.Term <- getGOTerm(sigGO.ID)
+
+#### Repeat for VitDEX only genes ###
+
+probesVitDEXonly <- rownames(Comb.only)
+sigVitDEXonly<-data.frame(Gene=unlist(mget(x = probesVitDEXonly,envir = illuminaHumanv4ENTREZREANNOTATED)))
+
+sigVitDEXonly <- sigVitDEXonly[complete.cases(sigVitDEXonly), ]
+sigVitDEXonly<- unique(sigVitDEXonly)
+
+params2 <- new("GOHyperGParams",
+              geneIds= sigVitDEXonly,
+              annotation="lumiHumanAll.db",
+              ontology="BP",
+              pvalueCutoff= 0.01,
+              conditional=FALSE,
+              testDirection="over")
+
+hgOver2 <- hyperGTest(params2)
+gGhyp.pv2 <- pvalues(hgOver2)
+gGhyp.padj2 <- p.adjust(gGhyp.pv2, "fdr")
+sigGO.ID2 <- names(gGhyp.padj2[gGhyp.padj2 <0.01])
+sigGO.Term2 <- getGOTerm(sigGO.ID2)

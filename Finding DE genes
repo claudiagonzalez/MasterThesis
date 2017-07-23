@@ -1,0 +1,109 @@
+# Filter genes with expression < 0 #
+genesExpressed <- detectionCall(Experiment.NV)
+ExperimentMatrix <- Experiment.NV[genesExpressed >0,]
+probeList <- rownames(ExperimentMatrix)
+
+# Rearrange order of samples #
+ExperimentMatrix <- ExperimentMatrix[,c(1,3,5,2,4,6,7,9,11,8,10,12)]
+
+# Track Gene ID #
+a<-as.matrix(ExperimentMatrix)
+genesID <- rownames(a)
+genesID<-data.frame(Gene=unlist(mget(x = probeList,envir = illuminaHumanv4SYMBOLREANNOTATED)))
+colnames(genesID) <- c("Symbol")
+rownames(a) <- genesID$Symbol
+
+# Heatmap (all probes) #
+fontsize <- 0.1
+Heatmap(a, cluster_columns=FALSE,
+        row_names_side = "right",
+        row_dend_side = "left",
+        row_names_gp=gpar(cex=fontsize))
+
+#### Setting contrast matrix ####
+
+# Using paired data ###
+
+samples <- c("1588", "1614", "1811", "1588", "1614", "1811", "1588", "1614", "1811","1588", "1614", "1811")
+treat <- c("Control", "Control", "Control", "VitD", "VitD", "VitD", "DEX", "DEX", "DEX", "VitDEX", "VitDEX", "VitDEX")
+e <- data.frame(samples, treat)
+colnames(e)<- c("Patient", "Treatment")
+
+fp <- factor(samples, levels = c("1588", "1614", "1811"))
+ft <- factor(treat, levels = c("Control", "VitD", "DEX", "VitDEX"))
+
+paired.design <- model.matrix (~ fp + ft)
+colnames(paired.design) <- c("Intercept", "p1588vs1614", "p1811vs1588", "VitD", "DEX", "VitDEX")
+data.fit <- lmFit(ExperimentMatrix,paired.design)
+
+### Comparing vs control###
+data.fit.eb <- eBayes(data.fit)
+results3 <- decideTests(data.fit.eb)
+
+## Venn Diagram ##
+results3 <- results3[,4:6]
+vennDiagram(results3)
+savetiff("VennDiagram VitDvsDEXvsComb_paired",density=300)
+
+#### Contrast VitD vs DEX vs VitDEX ####
+ 
+cont.matrix <-makeContrasts(VitDvsDEX= VitD-DEX, VitDEXvsVitD = VitDEX-VitD, VitDEXvsDEX = VitDEX-DEX, levels = paired.design)
+data.contr <- contrasts.fit(data.fit, cont.matrix)
+data.fit.eb4 <- eBayes(data.contr)
+results4 <-decideTests(data.fit.eb4)
+vennDiagram(results4)
+savetiff("VennDiagram IntraTreatment_paired",density=300)
+
+##### Save results for analysis #####
+
+#### VitD ###
+
+ # Number = 20,000 as entries in results3 > 19,0000 #
+coefVitD <- topTable(data.fit.eb,coef = "VitD", number = 20000)
+ # Filter FDR < 0.01 #
+coefVitDf <- coefVitD[coefVitD$adj.P.Val<0.01,]
+write.table(coefVitDf, "DE_VitD.txt", sep = "\t")
+
+ # Select upregulated genes #
+VitDup <- which(results3[,4] == 1)
+write.table(VitDup, "VitD_up.txt", sep = "\t")
+
+# Select downregulated genes #
+VitDdown <- which(results3[,4] == -1)
+write.table(VitDdown, "VitD_down.txt", sep = "\t")
+
+### Repeat for DEX and VitDEX ###
+
+coefDEX <- topTable(data.fit.eb,coef = "DEX", number = 20000)
+coefDEXf <- coefVitDEX[coefDEX$adj.P.Val<0.01,]
+write.table(coefDEXf, "DE_DEX.txt", sep = "\t")
+
+DEXup <- which(results3[,5] == 1)
+write.table(DEXup, "DEX_up.txt", sep = "\t")
+DEXdown <- which(results3[,5] == -1)
+write.table(DEXdown, "DEX_down.txt", sep = "\t")
+
+coefVitDEX <- topTable(data.fit.eb,coef = "VitDEX", number = 20000)
+coefVitDEXf <- coefVitDEX[coefVitDEX$adj.P.Val<0.01,]
+write.table(coefVitDEXf, "DE_VitDEX.txt", sep = "\t")
+
+VitDEXup <- which(results3[,6] == 1)
+write.table(VitDEXup, "VitDEX_up.txt", sep = "\t")
+VitDEXdown <- which(results3[,6] == -1)
+write.table(VitDEXdown, "VitDEX_down.txt", sep = "\t")
+
+## Extract intersections from Venn Diagram ##
+results3 <- decideTests(data.fit.eb)
+
+# Intercept #
+Iv <- which(results3[,6]!=0 & results3[,4]!=0 & results3[,5]!=0)
+write.table(Iv, "VitD_DEX_VitDEX intercept.txt", sep = "\t")
+
+# VitDEX and VitD #
+Iv <- which(results3 [,6]!=0 &results3[,4]!=0)
+write.table(Iv, "DE_VitDandVitDEX.txt", sep = "\t")
+
+# VitDEX and DEX #
+Iv <- which(results3 [,6]!=0 &results3[,5]!=0)
+write.table(Iv, "DE_DEXandVitDEX.txt", sep = "\t")
+

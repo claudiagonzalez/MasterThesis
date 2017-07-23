@@ -1,0 +1,31 @@
+## Convert the probe IDs to Entrez IDs and make them unique
+
+probesVitDEX <- rownames(coefVitDEXf)
+sigVitDEX<-data.frame(Gene=unlist(mget(x = probesVitDEX,envir = illuminaHumanv4ENTREZREANNOTATED)))
+
+# Delete probes with no Entrez ID # 
+
+sigVitDEX <- sigVitDEX[complete.cases(sigVitDEX), ]
+sigVitDEX<- unique(sigVitDEX)
+
+params <- new("GOHyperGParams",
+              geneIds= sigVitDEX,
+              annotation="lumiHumanAll.db",
+              ontology="BP",
+              pvalueCutoff= 0.01,
+              conditional=FALSE,
+              testDirection="over")
+
+hgOver <- hyperGTest(params)
+
+# Get p-values of the test # 
+gGhyp.pv <- pvalues(hgOver)
+
+# Adjust p-values for multiple testing # 
+gGhyp.padj <- p.adjust(gGhyp.pv, "fdr")
+
+# Select the GO terms with adjusted p-values < 0.01 #
+sigGO.ID <- names(gGhyp.padj[gGhyp.padj <0.01])
+
+# Show significant GO terms #
+sigGO.Term <- getGOTerm(sigGO.ID)

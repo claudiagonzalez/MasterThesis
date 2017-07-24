@@ -1,0 +1,24 @@
+##### KEGG Pathway Analysis for all VitDEX genes #####
+
+paramsKEGG <- new("KEGGHyperGParams",
+              geneIds= sigVitDEX,
+              annotation="lumiHumanAll.db",
+              pvalueCutoff= 0.01,
+              testDirection="over")
+
+hypK <- hyperGTest(paramsKEGG)
+sumTableK <- summary(hypK)
+
+## subset output table to get columns of interest ##
+  # KEGG ID, KEGG description, p-value #
+
+outK <- subset(sumTableK, select =c(1,7,2))
+
+# adjust P-values #
+
+pvalsK <-outK$Pvalue
+AdjPval <- p.adjust(pvalsK, "fdr")
+outK[,4]<- as.data.frame(AdjPval)
+
+### Repeat for VitDEX only (excluding VitD and DEX) genes ###
+

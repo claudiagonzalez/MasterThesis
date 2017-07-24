@@ -22,3 +22,41 @@ outK[,4]<- as.data.frame(AdjPval)
 
 ### Repeat for VitDEX only (excluding VitD and DEX) genes ###
 
+paramsKEGG <- new("KEGGHyperGParams",
+                  geneIds= sigVitDEXonly,
+                  annotation="lumiHumanAll.db",
+                  pvalueCutoff= 0.01,
+                  testDirection="over")
+
+hypK <- hyperGTest(paramsKEGG)
+sumTableK <- summary(hypK)
+
+outK <- subset(sumTableK, select =c(1,7,2,5,6))
+
+pvalsK <-outK$Pvalue
+AdjPval <- p.adjust(pvalsK, "fdr")
+outK <- cbind(outK, AdjPval)
+outK <- outK[,c(1,2,3,6,4,5)]
+
+write.table(outK, "KEGG_VitDEXonly.txt", sep = "\t")
+
+## Repeat for Intercept genes ##
+
+paramsKEGG <- new("KEGGHyperGParams",
+                  geneIds= sigIntercept,
+                  annotation="lumiHumanAll.db",
+                  pvalueCutoff= 0.01,
+                  testDirection="over")
+
+hypK <- hyperGTest(paramsKEGG)
+sumTableK <- summary(hypK)
+
+outK <- subset(sumTableK, select =c(1,7,2,5,6))
+
+pvalsK <-outK$Pvalue
+AdjPval <- p.adjust(pvalsK, "fdr")
+outK <- cbind(outK, AdjPval)
+outK <- outK[,c(1,2,3,6,4,5)]
+
+write.table(outK, "KEGG_Intercept.txt", sep = "\t")
+

@@ -6,6 +6,10 @@ library(geneplotter)
 library(dplyr)
 library(ComplexHeatmap)
 library (illuminaHumanv4.db)
+library(GOstats)
+library(Category)
+library (GO)
+library(KEGG.db)
 
 #### Set working directory #
 

@@ -1,3 +1,5 @@
+##### Analysis  VitDEX #####
+
 ## Convert the probe IDs to Entrez IDs and make them unique
 
 probesVitDEX <- rownames(coefVitDEXf)
@@ -17,20 +19,20 @@ params <- new("GOHyperGParams",
               testDirection="over")
 
 hgOver <- hyperGTest(params)
+sumTableGO <- summary(hgOver)
 
-# Get p-values of the test # 
-gGhyp.pv <- pvalues(hgOver)
+GO_VitDEXall <- subset(sumTableGO, select = c(1,7,2,5,6))
 
-# Adjust p-values for multiple testing # 
-gGhyp.padj <- p.adjust(gGhyp.pv, "fdr")
+# Adjusting P-val # 
+Pval <- sumTableGO$Pvalue
+AdjPval <- p.adjust(Pval, "fdr")
+GO_VitDEXall <- cbind(GO_VitDEXall, AdjPval)
+GO_VitDEXall <- GO_VitDEXall[,c(1,2,3,6,4,5)]
+GO_VitDEXall <- filter(GO_VitDEXall, AdjPval< 0.001)
 
-# Select the GO terms with adjusted p-values < 0.01 #
-sigGO.ID <- names(gGhyp.padj[gGhyp.padj <0.01])
+write.table(GO_VitDEXall, "GO_VitDEX.txt", sep = "\t")
 
-# Show significant GO terms #
-sigGO.Term <- getGOTerm(sigGO.ID)
-
-#### Repeat for VitDEX only genes ###
+#### Repeat for VitDEX only (VitDEX excluding VitD and DEX) genes ####
 
 probesVitDEXonly <- rownames(Comb.only)
 sigVitDEXonly<-data.frame(Gene=unlist(mget(x = probesVitDEXonly,envir = illuminaHumanv4ENTREZREANNOTATED)))
@@ -47,7 +49,45 @@ params2 <- new("GOHyperGParams",
               testDirection="over")
 
 hgOver2 <- hyperGTest(params2)
-gGhyp.pv2 <- pvalues(hgOver2)
-gGhyp.padj2 <- p.adjust(gGhyp.pv2, "fdr")
-sigGO.ID2 <- names(gGhyp.padj2[gGhyp.padj2 <0.01])
-sigGO.Term2 <- getGOTerm(sigGO.ID2)
+sumTableGO2 <- summary(hgOver2)
+
+GO_VitDEXonly <- subset(sumTableGO2, select = c(1,7,2,5,6))
+
+# Adjusting P-val # 
+Pval <- sumTableGO2$Pvalue
+AdjPval <- p.adjust(Pval, "fdr")
+GO_VitDEXonly <- cbind(GO_VitDEXonly, AdjPval)
+GO_VitDEXonly <- GO_VitDEXonly[,c(1,2,3,6,4,5)]
+GO_VitDEXonly <- filter(GO_VitDEXonly, AdjPval< 0.001)
+
+write.table(GO_VitDEXonly, "GO_VitDEXexceptVitDandDEX.txt", sep = "\t")
+
+## Repeat for intercept ##
+
+probesIntercept <- rownames(Intercept)
+sigIntercept<-data.frame(Gene=unlist(mget(x = probesIntercept,envir = illuminaHumanv4ENTREZREANNOTATED)))
+
+sigIntercept <- sigIntercept[complete.cases(sigIntercept), ]
+sigIntercept<- unique(sigIntercept)
+
+params3 <- new("GOHyperGParams",
+               geneIds= sigIntercept,
+               annotation="lumiHumanAll.db",
+               ontology="BP",
+               pvalueCutoff= 0.01,
+               conditional=FALSE,
+               testDirection="over")
+
+hgOverIntercept <- hyperGTest(params3)
+sumTableGOIntercept <- summary(hgOverIntercept)
+
+GO_Intercept <- subset(sumTableGOIntercept, select = c(1,7,2,5,6))
+
+Pval <- sumTableGOIntercept$Pvalue
+AdjPval <- p.adjust(Pval, "fdr")
+GO_Intercept <- cbind(GO_Intercept, AdjPval)
+GO_Intercept <- GO_Intercept[,c(1,2,3,6,4,5)]
+GO_Intercept <- filter(GO_Intercept, AdjPval< 0.001)
+
+write.table(GO_Intercept, "GO_Intercept.txt", sep = "\t")
+

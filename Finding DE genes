@@ -99,6 +99,9 @@ results3 <- decideTests(data.fit.eb)
 Iv <- which(results3[,6]!=0 & results3[,4]!=0 & results3[,5]!=0)
 write.table(Iv, "VitD_DEX_VitDEX intercept.txt", sep = "\t")
 
+Intercept <- as.data.frame.vector (Iv)
+Interceptgenes <- as.data.frame.vector(rownames(Intercept))
+
 # VitDEX and VitD #
 Iv <- which(results3 [,6]!=0 &results3[,4]!=0)
 write.table(Iv, "DE_VitDandVitDEX.txt", sep = "\t")

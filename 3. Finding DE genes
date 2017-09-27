@@ -1,28 +1,9 @@
 # Filter genes with expression < 0 #
 genesExpressed <- detectionCall(Experiment.NV)
 ExperimentMatrix <- Experiment.NV[genesExpressed >0,]
-probeList <- rownames(ExperimentMatrix)
 
-# Rearrange order of samples #
-ExperimentMatrix <- ExperimentMatrix[,c(1,3,5,2,4,6,7,9,11,8,10,12)]
 
-# Track Gene ID #
-a<-as.matrix(ExperimentMatrix)
-genesID <- rownames(a)
-genesID<-data.frame(Gene=unlist(mget(x = probeList,envir = illuminaHumanv4SYMBOLREANNOTATED)))
-colnames(genesID) <- c("Symbol")
-rownames(a) <- genesID$Symbol
-
-# Heatmap (all probes) #
-fontsize <- 0.1
-Heatmap(a, cluster_columns=FALSE,
-        row_names_side = "right",
-        row_dend_side = "left",
-        row_names_gp=gpar(cex=fontsize))
-
-#### Setting contrast matrix ####
-
-# Using paired data ###
+### Finding DE genes using paired data ###
 
 samples <- c("1588", "1614", "1811", "1588", "1614", "1811", "1588", "1614", "1811","1588", "1614", "1811")
 treat <- c("Control", "Control", "Control", "VitD", "VitD", "VitD", "DEX", "DEX", "DEX", "VitDEX", "VitDEX", "VitDEX")
@@ -36,80 +17,291 @@ paired.design <- model.matrix (~ fp + ft)
 colnames(paired.design) <- c("Intercept", "p1588vs1614", "p1811vs1588", "VitD", "DEX", "VitDEX")
 data.fit <- lmFit(ExperimentMatrix,paired.design)
 
-### Comparing vs control###
-data.fit.eb <- eBayes(data.fit)
-results3 <- decideTests(data.fit.eb)
+#Comparing vs control#
+data.fit.eb <- eBayes(data.fit, robust=TRUE)
+results1 <- decideTests(data.fit.eb)
 
 ## Venn Diagram ##
-results3 <- results3[,4:6]
-vennDiagram(results3)
-savetiff("VennDiagram VitDvsDEXvsComb_paired",density=300)
+results1 <- results1[,4:6]
+counts.results1<- vennCounts(results1)
 
-#### Contrast VitD vs DEX vs VitDEX ####
+vennDiagram(results1, names = c("VitD", "DEX", "VitD+DEX"), circle.col = c("olivedrab","deeppink3","navy"), main = "Differentially Expressed genes")
+title(main= "Treatments vs Control", cex.main=1)
+
+savetiff("VennDiagram TreatmentvsControl_paired",density=300)
+
+## Contrast VitD-DEX vs VitD-VitDEX ##
  
-cont.matrix <-makeContrasts(VitDvsDEX= VitD-DEX, VitDEXvsVitD = VitDEX-VitD, VitDEXvsDEX = VitDEX-DEX, levels = paired.design)
+cont.matrix <-makeContrasts(VitDvsDEX= VitD-DEX, VitDvsVitDEX = VitDEX-VitD, levels = paired.design)
 data.contr <- contrasts.fit(data.fit, cont.matrix)
-data.fit.eb4 <- eBayes(data.contr)
+data.fit.eb2 <- eBayes(data.contr, robust= TRUE)
+results2 <-decideTests(data.fit.eb2)
+vennDiagram(results2, circle.col = c("darkgoldenrod2","navy"), names = c("VitD vs DEX", "VitD vs VitD+DEX"),   main= "Differentially Expressed genes")
+title(main= "Treatment comparison", cex.main=1)
+
+counts.results2<- vennCounts(results2)
+
+savetiff("VennDiagram Treatment Comparison 1",density=300)
+
+## Contrast VitD-DEX vs DEX-VitDEX ##
+
+cont.matrix2 <-makeContrasts(VitDvsDEX= VitD-DEX, DEXvsVitDEX = VitDEX-DEX, levels = paired.design)
+data.contr2 <- contrasts.fit(data.fit, cont.matrix2)
+data.fit.eb3 <- eBayes(data.contr2, robust= TRUE)
+results3 <-decideTests(data.fit.eb3)
+vennDiagram(results3, circle.col = c("darkgoldenrod2","navy"), names = c("VitD vs DEX", "DEX vs VitD+DEX"), main= "Differentially Expressed genes")
+title(main= "Treatment comparison", cex.main=1)
+
+counts.results3<- vennCounts(results3)
+
+savetiff("VennDiagram Treatment Comparison 2",density=300)
+
+## Contrast VitDEX-VitD vs VitDEX-DEX ##
+
+cont.matrix3 <-makeContrasts(VitDEXvsVitD = VitDEX-VitD, VitDEXvsDEX= VitDEX-DEX, levels = paired.design)
+data.contr3 <- contrasts.fit(data.fit, cont.matrix3)
+data.fit.eb4 <- eBayes(data.contr3, robust = TRUE)
 results4 <-decideTests(data.fit.eb4)
-vennDiagram(results4)
-savetiff("VennDiagram IntraTreatment_paired",density=300)
+vennDiagram(results4, circle.col = c("darkgoldenrod2","navy"), names = c("VitD vs VitD+DEX", "DEX vs VitD+DEX"), main= "Differentially Expressed genes")
+title(main= "Treatment comparison", cex.main=1)
+
+counts.results4<- vennCounts(results4)
+
+savetiff("VennDiagram Treatment Comparisons 3",density=300)
 
 ##### Save results for analysis #####
+results1 <- decideTests(data.fit.eb)
 
 #### VitD ###
 
- # Number = 20,000 as entries in results3 > 19,0000 #
-coefVitD <- topTable(data.fit.eb,coef = "VitD", number = 20000)
- # Filter FDR < 0.01 #
-coefVitDf <- coefVitD[coefVitD$adj.P.Val<0.01,]
-write.table(coefVitDf, "DE_VitD.txt", sep = "\t")
 
- # Select upregulated genes #
-VitDup <- which(results3[,4] == 1)
-write.table(VitDup, "VitD_up.txt", sep = "\t")
+I <- which(results1[,4] != 0)
+write.table(I, "DE_I.txt", sep = "\t")
 
-# Select downregulated genes #
-VitDdown <- which(results3[,4] == -1)
-write.table(VitDdown, "VitD_down.txt", sep = "\t")
+tableI <- topTable(data.fit.eb,coef = "VitD", number = 20000)
+#  # Filter FDR < 0.01 #
+sig.tableI<- tableI[tableI$adj.P.Val<0.01,]
 
-### Repeat for DEX and VitDEX ###
 
-coefDEX <- topTable(data.fit.eb,coef = "DEX", number = 20000)
-coefDEXf <- coefVitDEX[coefDEX$adj.P.Val<0.01,]
-write.table(coefDEXf, "DE_DEX.txt", sep = "\t")
+ ## Select upregulated genes ##
+genes.I.up<- which(results1[,4] == 1)
+genes.I.up <-as.data.frame(genes.I.up)
+genes.I.up<- rownames(genes.I.up)
 
-DEXup <- which(results3[,5] == 1)
-write.table(DEXup, "DEX_up.txt", sep = "\t")
-DEXdown <- which(results3[,5] == -1)
-write.table(DEXdown, "DEX_down.txt", sep = "\t")
+# Obtain p-values #
+I.up <-tableI[rownames(tableI) %in% genes.I.up,]
+# Select Adj.Pval< 0.01
+I.up <- filter(I.up, adj.P.Val<0.01)
+# Format table # 
+I.up <- I.up[,c(3,4,7,9)]
+colnames(I.up)<- c("Gene", "Description", "Mod.t","AdjPval" )
 
-coefVitDEX <- topTable(data.fit.eb,coef = "VitDEX", number = 20000)
-coefVitDEXf <- coefVitDEX[coefVitDEX$adj.P.Val<0.01,]
-write.table(coefVitDEXf, "DE_VitDEX.txt", sep = "\t")
+write.table(I.up, "DE_I_up.txt", sep = "\t")
 
-VitDEXup <- which(results3[,6] == 1)
-write.table(VitDEXup, "VitDEX_up.txt", sep = "\t")
-VitDEXdown <- which(results3[,6] == -1)
-write.table(VitDEXdown, "VitDEX_down.txt", sep = "\t")
+
+#Select downregulated genes #
+genes.I.down<- which(results1[,4] == -1)
+genes.I.down <-as.data.frame(genes.I.down)
+genes.I.down<- rownames(genes.I.down)
+
+I.down <-tableI[rownames(tableI) %in% genes.I.down,]
+I.down <- filter(I.down, adj.P.Val<0.01)
+I.down <- I.down[,c(3,4,7,9)]
+colnames(I.down)<- c("Gene", "Description", "Mod.t","AdjPval" )
+
+write.table(I.down, "DE_I_down.txt", sep = "\t")
+
+### Section II (DEX) ###
+
+
+II <- which(results1[,5] != 0)
+write.table(II, "DE_II.txt", sep = "\t")
+
+tableII <- topTable(data.fit.eb,coef = "DEX", number = 20000)
+sig.tableII<- tableII[tableII$adj.P.Val<0.01,]
+
+### Select up and down regulated genes
+genes.II.up<- which(results1[,5] == 1)
+genes.II.up <-as.data.frame(genes.II.up)
+genes.II.up<- rownames(genes.II.up)
+
+
+II.up <-tableII[rownames(tableII) %in% genes.II.up,]
+II.up <- filter(II.up, adj.P.Val<0.01)
+II.up <- II.up[,c(3,4,7,9)]
+colnames(II.up)<- c("Gene", "Description", "Mod.t","AdjPval" )
+
+write.table(II.up, "DE_II_up.txt", sep = "\t")
+
+
+genes.II.down<- which(results1[,5] ==-1)
+genes.II.down <-as.data.frame(genes.II.down)
+genes.II.down<- rownames(genes.II.down)
+
+II.down <-tableII[rownames(tableII) %in% genes.II.down,]
+II.down <- filter(II.down, adj.P.Val<0.01)
+II.down <- II.down[,c(3,4,7,9)]
+colnames(II.down)<- c("Gene", "Description", "Mod.t","AdjPval")
+
+write.table(II.down, "DE_II_down.txt", sep = "\t")
+
+### SECTION III (VitDEX) ###
+III <- which(results1[,6] != 0)
+write.table(III, "DE_III.txt", sep = "\t")
+
+tableIII <- topTable(data.fit.eb,coef = "VitDEX", number = 20000)
+sig.tableIII<- tableIII[tableIII$adj.P.Val<0.01,]
+
+genes.III.up<- which(results1[,6] == 1)
+genes.III.up <-as.data.frame(genes.III.up)
+genes.III.up<- rownames(genes.III.up)
+
+III.up <-tableIII[rownames(tableIII) %in% genes.III.up,]
+III.up <- filter(III.up, adj.P.Val<0.01)
+III.up <- III.up[,c(3,4,7,9)]
+colnames(III.up)<- c("Gene", "Description", "Mod.t","AdjPval" )
+
+write.table(III.up, "DE_III_up.txt", sep = "\t")
+
+
+genes.III.down<- which(results1[,6] ==-1)
+genes.III.down <-as.data.frame(genes.III.down)
+genes.III.down<- rownames(genes.III.down)
+
+III.down <-tableIII[rownames(tableIII) %in% genes.III.down,]
+III.down <- filter(III.down, adj.P.Val<0.01)
+III.down <- III.down[,c(3,4,7,9)]
+colnames(III.down)<- c("Gene", "Description", "Mod.t","AdjPval")
+
+write.table(III.down, "DE_III_down.txt", sep = "\t")
+
 
 ## Extract intersections from Venn Diagram ##
-results3 <- decideTests(data.fit.eb)
+results1 <- decideTests(data.fit.eb)
 
 # Intercept #
-Iv <- which(results3[,6]!=0 & results3[,4]!=0 & results3[,5]!=0)
-write.table(Iv, "VitD_DEX_VitDEX intercept.txt", sep = "\t")
+IV <- which(results1[,6]!=0 & results1[,4]!=0 & results1[,5]!=0)
+write.table(IV, "DE_IV.txt", sep = "\t")
 
-Intercept <- as.data.frame.vector (Iv)
-Interceptgenes <- as.data.frame.vector(rownames(Intercept))
+genes.IV.all <- as.data.frame(IV)
+genes.IV.all<-rownames(genes.IV.all)
+genes.IV.all <-tableIII[rownames(tableIII) %in% genes.IV.all,]
+IV.up<- filter(genes.IV.all, t>0)
+IV.up <- filter(IV.up, adj.P.Val<0.01)
+IV.up <- IV.up[,c(3,4,7,9)]
+colnames(IV.up)<- c("Gene", "Description", "Mod.t","AdjPval")
 
-# VitDEX and VitD #
-Iv <- which(results3 [,6]!=0 &results3[,4]!=0)
-write.table(Iv, "DE_VitDandVitDEX.txt", sep = "\t")
+write.table(IV.up, "DE_IV_up.txt", sep = "\t")
 
-# VitDEX and DEX #
-Iv <- which(results3 [,6]!=0 &results3[,5]!=0)
-write.table(Iv, "DE_DEXandVitDEX.txt", sep = "\t")
+IV.down<- filter(genes.IV.all, t<0)
+IV.down <- filter(IV.down, adj.P.Val<0.01)
+IV.down <- IV.down[,c(3,4,7,9)]
+colnames(IV.down)<- c("Gene", "Description", "Mod.t","AdjPval")
 
-# VitDEX excluding VitD and DEX # 
-Iv <- which(results3 [,6]!=0 & results3[,4]==0 & results3[,5]==0)
-write.table(Iv, "DE_VitDEXexceptVitDandDEX.txt", sep = "\t")
+
+genes.IV.down <- filter(genes.IV.down, adj.P.Val<0.01)
+genes.IV.up<- filter(genes.IV.all, t>0)
+genes.IV.up<- filter(genes.IV.up, adj.P.Val<0.01)
+
+write.table(IV.down, "DE_IV_down.txt", sep = "\t")
+
+### como sacar p values de la intersecci'ón?
+
+V <- which(results1[,4]==0 & results1[,5]==0 & results1[,6]!=0)
+write.table(V, "DE_V.txt", sep = "\t")
+
+genes.V.up <- which(results1[,4]==0 & results1[,5]==0 & results1[,6]==1)
+genes.V.up <-as.data.frame(genes.V.up)
+genes.V.up<- rownames(genes.V.up)
+V.up <-tableIII[rownames(tableIII) %in% genes.V.up,]
+V.up <- filter(V.up, adj.P.Val<0.01)
+V.up <- V.up[,c(3,4,7,9)]
+colnames(V.up)<- c("Gene", "Description", "Mod.t","AdjPval")
+
+write.table(V.up, "DE_V_up.txt", sep = "\t")
+
+genes.V.down <- which(results1[,4]==0 & results1[,5]==0 & results1[,6]==-1)
+genes.V.down <-as.data.frame(genes.V.down)
+genes.V.down<- rownames(genes.V.down)
+V.down <-tableIII[rownames(tableIII) %in% genes.V.down,]
+V.down <- filter(V.down, adj.P.Val<0.01)
+V.down <- V.down[,c(3,4,7,9)]
+colnames(V.down)<- c("Gene", "Description", "Mod.t","AdjPval")
+
+write.table(V.down, "DE_V_down.txt", sep = "\t")
+
+VI <- which(results1[,4]!=0 & results1[,5]==0 & results1[,6]!=0)
+write.table(VI, "DE_VI.txt", sep = "\t")
+
+VII <- which(results1[,4]==0 & results1[,5]!=0 & results1[,6]!=0)
+write.table(VII, "DE_VII.txt", sep = "\t")
+
+VIII <- which(results1[,4]!=0 & results1[,5]!=0 & results1[,6]==0)
+write.table(VIII, "DE_VIII.txt", sep = "\t")
+
+IX<- which(results1 [,4]!=0 &results1[,6]!=0)
+write.table(IX, "DE_IX.txt", sep = "\t")
+
+X<- which(results1 [,5]!=0 &results1[,6]!=0)
+write.table(X, "DE_X.txt", sep = "\t")
+
+XI<- which(results1 [,4]!=0 &results1[,5]!=0)
+write.table(XI, "DE_XI.txt", sep = "\t")
+
+XII <- which(results1[,4]!=0 & results1[,5]==0 & results1[,6]==0)
+write.table(XII, "DE_XII.txt", sep = "\t")
+
+XIII <- which(results1[,4]==0 & results1[,5]!=0 & results1[,6]==0)
+write.table(XIII, "DE_XIII.txt", sep = "\t")
+
+## Extract genes from treatment comparison 1 ##
+
+XX <-which(results2[,1]==0 & results2[,2]!=0)
+write.table(XX, "DE_XX.txt", sep = "\t")
+
+XXI <-which(results2[,1]!=0 & results2[,2]!=0)
+write.table(XXI, "DE_XXI.txt", sep = "\t")
+
+XXII <-which(results2[,2]!=0)
+write.table(XXII, "DE_XXII.txt", sep = "\t")
+
+## Extract genes from treatment comparison 2 ##
+
+XXX <-which(results3[,1]==0 & results3[,2]!=0)
+write.table(XXX, "DE_XXX.txt", sep = "\t")
+
+XXXI <-which(results3[,1]!=0 & results3[,2]!=0)
+write.table(XXXI, "DE_XXXI.txt", sep = "\t")
+
+XXXII <-which(results3[,2]!=0)
+write.table(XXXII, "DE_XXXII.txt", sep = "\t")
+
+## Extract genes from treatment comparison 3 ##
+
+XL <-which(results4[,1]==0 & results4[,2]!=0)
+write.table(XL, "DE_XL.txt", sep = "\t")
+
+XLI <-which(results4[,1]!=0 & results4[,2]!=0)
+write.table(XLI, "DE_XLI.txt", sep = "\t")
+
+
+genes.XLI.all <- as.data.frame(XLI)
+genes.XLI.all<-rownames(genes.XLI.all)
+
+genes.XLI.all <-data.fit.eb4[rownames(data.fit.eb4) %in% genes.XLI.all,]
+genes.XLI.all <- as.data.frame(genes.XLI.all)
+XLI.up <- filter(genes.XLI.all, t.VitDEXvsVitD>0)
+XLI.up <- XLI.up[,c(9,10,21,22)]
+colnames(XLI.up)<- c("Gene", "Description", "F-stat","AdjPval")
+write.table(XLI.up, "DE_XLI_up.txt", sep = "\t")
+
+XLI.down <- filter(genes.XLI.all, t.VitDEXvsVitD<0)
+XLI.down <- XLI.down[,c(9,10,21,22)]
+colnames(XLI.down)<- c("Gene", "Description", "F-stat","AdjPval")
+write.table(XLI.down, "DE_XLI_down.txt", sep = "\t")
+
+XLII <-which(results4[,1]!=0 & results4[,2]==0)
+write.table(XLII, "DE_XLII.txt", sep = "\t")
+
+
+

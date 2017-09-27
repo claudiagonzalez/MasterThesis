@@ -1,17 +1,17 @@
-##### Analysis  VitDEX #####
+##### Gene Ontology Analysis  #####
 
-## Convert the probe IDs to Entrez IDs and make them unique
+## Convert the probe IDs to Entrez IDs 
 
-probesVitDEX <- rownames(coefVitDEXf)
-sigVitDEX<-data.frame(Gene=unlist(mget(x = probesVitDEX,envir = illuminaHumanv4ENTREZREANNOTATED)))
+probesI <- rownames(sig.tableI)
+genes.I<-data.frame(Gene=unlist(mget(x = probesI,envir = illuminaHumanv4ENTREZREANNOTATED)))
 
 # Delete probes with no Entrez ID # 
 
-sigVitDEX <- sigVitDEX[complete.cases(sigVitDEX), ]
-sigVitDEX<- unique(sigVitDEX)
+genes.I <- genes.I[complete.cases(genes.I),]
+genes.I<-unique(genes.I)
 
 params <- new("GOHyperGParams",
-              geneIds= sigVitDEX,
+              geneIds= genes.I,
               annotation="lumiHumanAll.db",
               ontology="BP",
               pvalueCutoff= 0.01,
@@ -21,73 +21,174 @@ params <- new("GOHyperGParams",
 hgOver <- hyperGTest(params)
 sumTableGO <- summary(hgOver)
 
-GO_VitDEXall <- subset(sumTableGO, select = c(1,7,2,5,6))
+GO_I <- subset(sumTableGO, select = c(1,7,2,5,6))
 
 # Adjusting P-val # 
 Pval <- sumTableGO$Pvalue
 AdjPval <- p.adjust(Pval, "fdr")
-GO_VitDEXall <- cbind(GO_VitDEXall, AdjPval)
-GO_VitDEXall <- GO_VitDEXall[,c(1,2,3,6,4,5)]
-GO_VitDEXall <- filter(GO_VitDEXall, AdjPval< 0.001)
+GO_I <- cbind(GO_I, AdjPval)
+GO_I <- GO_I[,c(1,2,3,6,4,5)]
+GO_I <- filter(GO_I, AdjPval< 0.001)
 
-write.table(GO_VitDEXall, "GO_VitDEX.txt", sep = "\t")
+symbol.I<-data.frame(Gene=unlist(mget(x = probesI,envir = illuminaHumanv4SYMBOLREANNOTATED)))
 
-#### Repeat for VitDEX only (VitDEX excluding VitD and DEX) genes ####
 
-probesVitDEXonly <- rownames(Comb.only)
-sigVitDEXonly<-data.frame(Gene=unlist(mget(x = probesVitDEXonly,envir = illuminaHumanv4ENTREZREANNOTATED)))
+# LATEX TABLE
+# GO_I_table <- print.xtable(GO_I, type= "html")
 
-sigVitDEXonly <- sigVitDEXonly[complete.cases(sigVitDEXonly), ]
-sigVitDEXonly<- unique(sigVitDEXonly)
+write.table(GO_I, "GO_I.txt", sep = "\t")
 
-params2 <- new("GOHyperGParams",
-              geneIds= sigVitDEXonly,
+#### Repeat for Section II, III ###
+
+probesII <- rownames(sig.tableII)
+genes.II<-data.frame(Gene=unlist(mget(x = probesII,envir = illuminaHumanv4ENTREZREANNOTATED)))
+genes.II <- genes.II[complete.cases(genes.II),]
+genes.II<-unique(genes.II)
+
+params <- new("GOHyperGParams",
+              geneIds= genes.II,
               annotation="lumiHumanAll.db",
               ontology="BP",
               pvalueCutoff= 0.01,
               conditional=FALSE,
               testDirection="over")
 
-hgOver2 <- hyperGTest(params2)
-sumTableGO2 <- summary(hgOver2)
+hgOver <- hyperGTest(params)
+sumTableGO <- summary(hgOver)
 
-GO_VitDEXonly <- subset(sumTableGO2, select = c(1,7,2,5,6))
+GO_II <- subset(sumTableGO, select = c(1,7,2,5,6))
 
-# Adjusting P-val # 
-Pval <- sumTableGO2$Pvalue
+Pval <- sumTableGO$Pvalue
 AdjPval <- p.adjust(Pval, "fdr")
-GO_VitDEXonly <- cbind(GO_VitDEXonly, AdjPval)
-GO_VitDEXonly <- GO_VitDEXonly[,c(1,2,3,6,4,5)]
-GO_VitDEXonly <- filter(GO_VitDEXonly, AdjPval< 0.001)
+GO_II <- cbind(GO_II, AdjPval)
+GO_II <- GO_II[,c(1,2,3,6,4,5)]
+GO_II <- filter(GO_II, AdjPval< 0.001)
 
-write.table(GO_VitDEXonly, "GO_VitDEXexceptVitDandDEX.txt", sep = "\t")
+# LATEX TABLE
+#GO_II_table <- print.xtable(GO_II, type= "html")
 
-## Repeat for intercept ##
+write.table(GO_II, "GO_II.txt", sep = "\t")
 
-probesIntercept <- rownames(Intercept)
-sigIntercept<-data.frame(Gene=unlist(mget(x = probesIntercept,envir = illuminaHumanv4ENTREZREANNOTATED)))
+probesIII <- rownames(sig.tableIII)
+genes.III<-data.frame(Gene=unlist(mget(x = probesIII,envir = illuminaHumanv4ENTREZREANNOTATED)))
+genes.III <- genes.III[complete.cases(genes.III),]
+genes.III<-unique(genes.III)
 
-sigIntercept <- sigIntercept[complete.cases(sigIntercept), ]
-sigIntercept<- unique(sigIntercept)
+params <- new("GOHyperGParams",
+              geneIds= genes.III,
+              annotation="lumiHumanAll.db",
+              ontology="BP",
+              pvalueCutoff= 0.01,
+              conditional=FALSE,
+              testDirection="over")
 
-params3 <- new("GOHyperGParams",
-               geneIds= sigIntercept,
-               annotation="lumiHumanAll.db",
-               ontology="BP",
-               pvalueCutoff= 0.01,
-               conditional=FALSE,
-               testDirection="over")
+hgOver <- hyperGTest(params)
+sumTableGO <- summary(hgOver)
 
-hgOverIntercept <- hyperGTest(params3)
-sumTableGOIntercept <- summary(hgOverIntercept)
+GO_III <- subset(sumTableGO, select = c(1,7,2,5,6))
 
-GO_Intercept <- subset(sumTableGOIntercept, select = c(1,7,2,5,6))
-
-Pval <- sumTableGOIntercept$Pvalue
+Pval <- sumTableGO$Pvalue
 AdjPval <- p.adjust(Pval, "fdr")
-GO_Intercept <- cbind(GO_Intercept, AdjPval)
-GO_Intercept <- GO_Intercept[,c(1,2,3,6,4,5)]
-GO_Intercept <- filter(GO_Intercept, AdjPval< 0.001)
+GO_III <- cbind(GO_III, AdjPval)
+GO_III <- GO_III[,c(1,2,3,6,4,5)]
+GO_III <- filter(GO_III, AdjPval< 0.001)
 
-write.table(GO_Intercept, "GO_Intercept.txt", sep = "\t")
+# LATEX TABLE
+#GO_III_table <- print.xtable(GO_III, type= "html")
 
+write.table(GO_III, "GO_III.txt", sep = "\t")
+
+## Repear for setions IV, V and XLI ##
+
+IV <-as.matrix(IV)
+probesIV <- rownames(IV)
+
+genes.IV<-data.frame(Gene=unlist(mget(x = probesIV,envir = illuminaHumanv4ENTREZREANNOTATED)))
+genes.IV <- genes.IV[complete.cases(genes.IV),]
+genes.IV<-unique(genes.IV)
+
+params <- new("GOHyperGParams",
+              geneIds= genes.IV,
+              annotation="lumiHumanAll.db",
+              ontology="BP",
+              pvalueCutoff= 0.01,
+              conditional=FALSE,
+              testDirection="over")
+
+hgOver <- hyperGTest(params)
+sumTableGO <- summary(hgOver)
+
+GO_IV <- subset(sumTableGO, select = c(1,7,2,5,6))
+
+Pval <- sumTableGO$Pvalue
+AdjPval <- p.adjust(Pval, "fdr")
+GO_IV <- cbind(GO_IV, AdjPval)
+GO_IV <- GO_IV[,c(1,2,3,6,4,5)]
+GO_IV <- filter(GO_IV, AdjPval< 0.001)
+
+# LATEX TABLE
+#GO_IV_table <- print.xtable(GO_IV, type= "html")
+
+write.table(GO_IV, "GO_IV.txt", sep = "\t")
+
+V <-as.matrix(V)
+probesV <- rownames(V)
+
+genes.V<-data.frame(Gene=unlist(mget(x = probesV,envir = illuminaHumanv4ENTREZREANNOTATED)))
+genes.V <- genes.V[complete.cases(genes.V),]
+genes.V<-unique(genes.V)
+
+params <- new("GOHyperGParams",
+              geneIds= genes.V,
+              annotation="lumiHumanAll.db",
+              ontology="BP",
+              pvalueCutoff= 0.01,
+              conditional=FALSE,
+              testDirection="over")
+
+hgOver <- hyperGTest(params)
+sumTableGO <- summary(hgOver)
+
+GO_V <- subset(sumTableGO, select = c(1,7,2,5,6))
+
+Pval <- sumTableGO$Pvalue
+AdjPval <- p.adjust(Pval, "fdr")
+GO_V <- cbind(GO_V, AdjPval)
+GO_V <- GO_V[,c(1,2,3,6,4,5)]
+GO_V <- filter(GO_V, AdjPval< 0.001)
+
+# LATEX TABLE
+#GO_V_table <- print.xtable(GO_V, type= "html")
+
+write.table(GO_V, "GO_V.txt", sep = "\t")
+
+XLI <-as.matrix(XLI)
+probesXLI <- rownames(XLI)
+
+genes.XLI<-data.frame(Gene=unlist(mget(x = probesXLI,envir = illuminaHumanv4ENTREZREANNOTATED)))
+genes.XLI <- genes.XLI[complete.cases(genes.XLI),]
+genes.XLI<-unique(genes.XLI)
+
+params <- new("GOHyperGParams",
+              geneIds= genes.XLI,
+              annotation="lumiHumanAll.db",
+              ontology="BP",
+              pvalueCutoff= 0.01,
+              conditional=FALSE,
+              testDirection="over")
+
+hgOver <- hyperGTest(params)
+sumTableGO <- summary(hgOver)
+
+GO_XLI <- subset(sumTableGO, select = c(1,7,2,5,6))
+
+Pval <- sumTableGO$Pvalue
+AdjPval <- p.adjust(Pval, "fdr")
+GO_XLI <- cbind(GO_XLI, AdjPval)
+GO_XLI <- GO_XLI[,c(1,2,3,6,4,5)]
+GO_XLI <- filter(GO_XLI, AdjPval< 0.01)
+
+# LATEX TABLE
+GO_XLI_table <- print.xtable(GO_XLI)
+
+write.table(GO_XLI, "GO_XLI.txt", sep = "\t")

@@ -1,7 +1,7 @@
-##### KEGG Pathway Analysis for all VitDEX genes #####
+##### KEGG Pathway analysis for all VitDEX genes#####
 
 paramsKEGG <- new("KEGGHyperGParams",
-              geneIds= sigVitDEX,
+              geneIds= genes.I,
               annotation="lumiHumanAll.db",
               pvalueCutoff= 0.01,
               testDirection="over")
@@ -10,20 +10,23 @@ hypK <- hyperGTest(paramsKEGG)
 sumTableK <- summary(hypK)
 
 ## subset output table to get columns of interest ##
-  # KEGG ID, KEGG description, p-value #
+  # KEGG ID, KEGG description, p-value, size and count#
 
-outK <- subset(sumTableK, select =c(1,7,2))
+KEGG_I<- subset(sumTableK, select =c(1,7,2,5,6))
 
 # adjust P-values #
 
-pvalsK <-outK$Pvalue
+pvalsK <-KEGG_I$Pvalue
 AdjPval <- p.adjust(pvalsK, "fdr")
-outK[,4]<- as.data.frame(AdjPval)
+KEGG_I <- cbind(KEGG_I, AdjPval)
+KEGG_I <- KEGG_I[,c(1,2,3,6,4,5)]
 
-### Repeat for VitDEX only (excluding VitD and DEX) genes ###
+write.table(KEGG_I, "KEGG_I.txt", sep = "\t")
+
+##
 
 paramsKEGG <- new("KEGGHyperGParams",
-                  geneIds= sigVitDEXonly,
+                  geneIds= genes.II,
                   annotation="lumiHumanAll.db",
                   pvalueCutoff= 0.01,
                   testDirection="over")
@@ -31,19 +34,18 @@ paramsKEGG <- new("KEGGHyperGParams",
 hypK <- hyperGTest(paramsKEGG)
 sumTableK <- summary(hypK)
 
-outK <- subset(sumTableK, select =c(1,7,2,5,6))
+KEGG_II<- subset(sumTableK, select =c(1,7,2,5,6))
 
-pvalsK <-outK$Pvalue
+pvalsK <-KEGG_II$Pvalue
 AdjPval <- p.adjust(pvalsK, "fdr")
-outK <- cbind(outK, AdjPval)
-outK <- outK[,c(1,2,3,6,4,5)]
+KEGG_II <- cbind(KEGG_II, AdjPval)
+KEGG_II <- KEGG_II[,c(1,2,3,6,4,5)]
 
-write.table(outK, "KEGG_VitDEXonly.txt", sep = "\t")
+write.table(KEGG_II, "KEGG_II.txt", sep = "\t")
 
-## Repeat for Intercept genes ##
-
+##
 paramsKEGG <- new("KEGGHyperGParams",
-                  geneIds= sigIntercept,
+                  geneIds= genes.III,
                   annotation="lumiHumanAll.db",
                   pvalueCutoff= 0.01,
                   testDirection="over")
@@ -51,12 +53,67 @@ paramsKEGG <- new("KEGGHyperGParams",
 hypK <- hyperGTest(paramsKEGG)
 sumTableK <- summary(hypK)
 
-outK <- subset(sumTableK, select =c(1,7,2,5,6))
+KEGG_III<- subset(sumTableK, select =c(1,7,2,5,6))
 
-pvalsK <-outK$Pvalue
+pvalsK <-KEGG_III$Pvalue
 AdjPval <- p.adjust(pvalsK, "fdr")
-outK <- cbind(outK, AdjPval)
-outK <- outK[,c(1,2,3,6,4,5)]
+KEGG_III <- cbind(KEGG_III, AdjPval)
+KEGG_III <- KEGG_III[,c(1,2,3,6,4,5)]
 
-write.table(outK, "KEGG_Intercept.txt", sep = "\t")
+write.table(KEGG_III, "KEGG_III.txt", sep = "\t")
+##
+paramsKEGG <- new("KEGGHyperGParams",
+                  geneIds= genes.IV,
+                  annotation="lumiHumanAll.db",
+                  pvalueCutoff= 0.01,
+                  testDirection="over")
 
+hypK <- hyperGTest(paramsKEGG)
+sumTableK <- summary(hypK)
+
+KEGG_IV<- subset(sumTableK, select =c(1,7,2,5,6))
+
+pvalsK <-KEGG_IV$Pvalue
+AdjPval <- p.adjust(pvalsK, "fdr")
+KEGG_IV <- cbind(KEGG_IV, AdjPval)
+KEGG_IV <- KEGG_IV[,c(1,2,3,6,4,5)]
+
+write.table(KEGG_IV, "KEGG_IV.txt", sep = "\t")
+
+##
+paramsKEGG <- new("KEGGHyperGParams",
+                  geneIds= genes.V,
+                  annotation="lumiHumanAll.db",
+                  pvalueCutoff= 0.01,
+                  testDirection="over")
+
+hypK <- hyperGTest(paramsKEGG)
+sumTableK <- summary(hypK)
+
+KEGG_V<- subset(sumTableK, select =c(1,7,2,5,6))
+
+pvalsK <-KEGG_V$Pvalue
+AdjPval <- p.adjust(pvalsK, "fdr")
+KEGG_V <- cbind(KEGG_V, AdjPval)
+KEGG_V <- KEGG_V[,c(1,2,3,6,4,5)]
+
+write.table(KEGG_V, "KEGG_V.txt", sep = "\t")
+
+##
+paramsKEGG <- new("KEGGHyperGParams",
+                  geneIds= genes.XLI,
+                  annotation="lumiHumanAll.db",
+                  pvalueCutoff= 0.01,
+                  testDirection="over")
+
+hypK <- hyperGTest(paramsKEGG)
+sumTableK <- summary(hypK)
+
+KEGG_XLI<- subset(sumTableK, select =c(1,7,2,5,6))
+
+pvalsK <-KEGG_XLI$Pvalue
+AdjPval <- p.adjust(pvalsK, "fdr")
+KEGG_XLI <- cbind(KEGG_XLI, AdjPval)
+KEGG_XLI <- KEGG_XLI[,c(1,2,3,6,4,5)]
+
+write.table(KEGG_XLI, "KEGG_XLI.txt", sep = "\t")
